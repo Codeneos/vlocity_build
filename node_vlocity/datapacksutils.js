@@ -1,5 +1,6 @@
 var fs = require("fs-extra");
 var path  = require('path');
+var stringify = require('json-stable-stringify');
 
 // use consts for setting the namespace prefix so that we easily can reference it later on in this file
 const namespacePrefix = 'vlocity_namespace';
@@ -9,6 +10,16 @@ var DataPacksUtils = module.exports = function(vlocity) {
 	this.vlocity = vlocity || {};
 
 	this.dataPacksExpandedDefinition = JSON.parse(fs.readFileSync(path.join(__dirname, "datapacksexpanddefinition.json"), 'utf8'));
+};
+
+DataPacksUtils.prototype.updateExpandedDefinition = function(expandedDefinition) {
+
+	var self = this;
+	Object.keys(expandedDefinition).forEach(function(dataPackType) {
+		Object.keys(expandedDefinition[dataPackType]).forEach(function(setting) {
+			self.dataPacksExpandedDefinition[dataPackType][setting] = expandedDefinition[dataPackType][setting];
+		});
+	});
 };
 
 DataPacksUtils.prototype.getSourceKeyDefinitionFields = function(SObjectType) {
@@ -76,6 +87,22 @@ DataPacksUtils.prototype.getFileType = function(dataPackType, SObjectType) {
 
 DataPacksUtils.prototype.getJsonFields = function(dataPackType, SObjectType) {
 	return this.getExpandedDefinition(dataPackType, SObjectType, "JsonFields");
+}
+
+DataPacksUtils.prototype.isAllowParallel = function(dataPackType) {
+	return this.getExpandedDefinition(dataPackType, null, "SupportParallel");
+}
+
+DataPacksUtils.prototype.isSoloDeploy = function(dataPackType) {
+	return this.getExpandedDefinition(dataPackType, null, "SoloDeploy");
+}
+
+DataPacksUtils.prototype.isAllowHeadersOnly = function(dataPackType) {
+	return this.getExpandedDefinition(dataPackType, null, "AllowHeadersOnly");
+}
+
+DataPacksUtils.prototype.getExportGroupSizeForType = function(dataPackType) {
+	return this.getExpandedDefinition(dataPackType, null, "ExportGroupSize");
 }
 
 DataPacksUtils.prototype.getApexImportDataKeys = function(SObjectType) {
@@ -238,12 +265,13 @@ DataPacksUtils.prototype.loadApex = function(projectPath, filePath, currentConte
 	}
 }
 
-DataPacksUtils.prototype.runApex = function(projectPath, filePath, currentContextData) {	
+DataPacksUtils.prototype.runApex = function(projectPath, filePath, currentContextData) {
 	return this
 		.loadApex(projectPath, filePath, currentContextData)
 		.then((apexFileData) => { 
 			return new Promise((resolve, reject) => {
 				this.vlocity.jsForceConnection.tooling.executeAnonymous(apexFileData, (err, res) => {
+
 					if (err) return reject(err);
 					if (res.success === true) return resolve(true);
 					if (res.compileProblem) {
@@ -259,11 +287,75 @@ DataPacksUtils.prototype.runApex = function(projectPath, filePath, currentContex
 				});
 			});
 		});
-}
+};
 
 
+DataPacksUtils.prototype.hashCode = function(toHash) {
+ 	var hash = 0, i, chr;
 
+ 	if (toHash.length === 0) return hash;
 
+	for (i = 0; i < toHash.length; i++) {
+		chr   = toHash.charCodeAt(i);
+		hash  = ((hash << 5) - hash) + chr;
+		hash |= 0; // Convert to 32bit integer
+	}
 
+	return hash;
+};
 
+DataPacksUtils.prototype.getDataPackHash = function(dataPack) {
 
+	var clonedDataPackData = JSON.parse(stringify(dataPack));
+
+	// Remove these as they would not be real changes
+	clonedDataPackData.VlocityDataPackParents = null;
+	clonedDataPackData.VlocityDataPackAllRelationships = null;
+
+	return this.hashCode(stringify(clonedDataPackData));
+};
+
+DataPacksUtils.prototype.printJobStatus = function(jobInfo) {
+
+	var totalRemaining = 0;
+	var successfulCount = 0;
+	var errorsCount = 0;
+
+	if (jobInfo.jobAction == 'Deploy') {
+		Object.keys(jobInfo.currentStatus).forEach(function(dataPackKey) {
+			if (jobInfo.currentStatus[dataPackKey] == 'Ready' 
+				|| jobInfo.currentStatus[dataPackKey] == 'Header') {
+				totalRemaining++;
+			} else if (jobInfo.currentStatus[dataPackKey] == 'Success') {
+				successfulCount++;
+			} else if (jobInfo.currentStatus[dataPackKey] == 'Error') {
+				errorsCount++;
+			}
+		});
+	} else if (jobInfo.jobAction == 'Export') {
+
+		Object.keys(jobInfo.currentStatus).forEach(function(dataPackKey) {
+			if (jobInfo.currentStatus[dataPackKey] == 'Error') {
+				errorsCount++;
+			}
+		});
+
+		Object.keys(jobInfo.alreadyExportedIdsByType).forEach(function(dataPackType) {
+			successfulCount += jobInfo.alreadyExportedIdsByType[dataPackType].length;
+		});
+
+		if (jobInfo.extendedManifest) {
+			Object.keys(jobInfo.extendedManifest).forEach(function(dataPackType) {
+				totalRemaining += jobInfo.extendedManifest[dataPackType].length;
+			});
+		}
+	}
+
+	var elapsedTime = (Date.now() - jobInfo.startTime) / 1000;
+
+	console.log('\x1b[32m', 'Successful: ' + successfulCount + ' Errors: ' + errorsCount + ' Remaining: ' + totalRemaining + ' Elapsed Time: ' + Math.floor((elapsedTime / 60)) + 'm ' + Math.floor((elapsedTime % 60)) + 's');
+
+	if (jobInfo.hasError) {
+		jobInfo.errorMessage = jobInfo.errors.join('\n');
+	}
+};
