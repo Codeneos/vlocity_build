@@ -213,16 +213,15 @@ DataPacksUtils.prototype.loadApex = function(projectPath, filePath, currentConte
 
 		if (includes) {
 			var srcdir = path.dirname(apexFileName);
-			for (var i = 0; i < includes.length; i++) {
-				var replacement = includes[i];
+			includes.forEach((replacement, i) => {
 				var className = replacement.replace("//include ", "").replace(";", "");				
 				includePromises.push(
 					this.loadApex(srcdir, className, currentContextData).then((includedFileData) => {
 						apexFileData = apexFileData.replace(replacement, includedFileData);
 						return apexFileData;
 					}
-				));			
-			}
+				));
+            });
 		}
 
 		return Promise.all(includePromises).then(() => {
@@ -248,7 +247,7 @@ DataPacksUtils.prototype.runApex = function(projectPath, filePath, currentContex
 					if (res.success === true) return resolve(true);
 					if (res.compileProblem) {
 						console.log('\x1b[36m', '>>' ,'\x1b[0m APEX Compilation Error:', res.compileProblem);
-					} 
+					}
 					if (res.exceptionMessage) {
 						console.log('\x1b[36m', '>>' ,'\x1b[0m APEX Exception Message:', res.exceptionMessage);
 					}
@@ -260,10 +259,3 @@ DataPacksUtils.prototype.runApex = function(projectPath, filePath, currentContex
 			});
 		});
 }
-
-
-
-
-
-
-
