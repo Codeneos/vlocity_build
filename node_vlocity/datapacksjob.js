@@ -34,7 +34,6 @@ DataPacksJob.prototype.getOptionsFromJobInfo = function(jobInfo) {
 
 DataPacksJob.prototype.runJob = function(jobData, jobName, action, onSuccess, onError, skipUpload) {
     var self = this;
-
     var jobInfo = jobData[jobName];
 
     jobInfo.jobName = jobName;
@@ -52,17 +51,13 @@ DataPacksJob.prototype.runJob = function(jobData, jobName, action, onSuccess, on
         }
     }
 
-    var toolingApi = self.vlocity.jsForceConnection.tooling;
-
     function executeJob() {
         if (jobInfo.preJobApex && jobInfo.preJobApex[action]) {
-
             // Builds the JSON Array sent to Anon Apex that gets run before deploy
             // Issues when > 32000 chars. Need to add chunking for this. 
             if (action == 'Deploy') {
                 self.vlocity.datapacksbuilder.initializeImportStatus(jobInfo.projectPath + '/' + jobInfo.expansionPath, jobInfo.manifest, jobInfo);
             }
-
             var prePromise = self.vlocity.datapacksutils.runApex(jobInfo.projectPath, jobInfo.preJobApex[action], jobInfo.preDeployDataSummary);
         } else {
             var prePromise = Promise.resolve(true);
@@ -79,8 +74,7 @@ DataPacksJob.prototype.runJob = function(jobData, jobName, action, onSuccess, on
                 }
             });
         })
-        .then(function(jobStatus) {
-            
+        .then(function(jobStatus) {            
             if (!jobStatus.hasError && jobInfo.postJobApex && jobInfo.postJobApex[action]) {
                 return self.vlocity.datapacksutils.runApex(jobInfo.projectPath, jobInfo.postJobApex[action], jobInfo.postDeployResults);
             } else {
@@ -88,30 +82,21 @@ DataPacksJob.prototype.runJob = function(jobData, jobName, action, onSuccess, on
             }
         })
         .then(function(jobStatus) {
-
             if (self.vlocity.verbose) {
                 console.log('\x1b[36m', '>>' ,'\x1b[0m', jobStatus);
+            }            
+            if (jobStatus.hasError) {
+                if (onError) return onError(jobStatus);
+                return console.log('jobStatus', jobStatus.errorMessage);
             }
-
-            if (!jobStatus.hasError) {
-                if (onSuccess) {
-                    onSuccess(jobStatus);
-                } else {
-                    console.log('jobStatus', stringify(jobStatus, { space: 2 }));
-                }
-            } else {
-                if (onError) {
-                    onError(jobStatus);
-                } else {
-                    console.log('jobStatus', jobStatus.errorMessage);
-                }
-            }
+            if (onSuccess) return onSuccess(jobStatus);
+            console.log('jobStatus', stringify(jobStatus, { space: 2 }));
         }, onError);
-       }
+    }
 
-       if (skipUpload) {
-           executeJob();
-       } else {
+    if (skipUpload) {
+        executeJob();
+    } else {
         self.vlocity.checkLogin(executeJob);
     }
 };
