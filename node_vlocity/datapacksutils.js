@@ -6,114 +6,114 @@ const namespacePrefix = 'vlocity_namespace';
 const namespaceFieldPrefix = '%' + namespacePrefix + '%__';
 
 var DataPacksUtils = module.exports = function(vlocity) {
-	this.vlocity = vlocity || {};
+    this.vlocity = vlocity || {};
 
-	this.dataPacksExpandedDefinition = JSON.parse(fs.readFileSync(path.join(__dirname, "datapacksexpanddefinition.json"), 'utf8'));
+    this.dataPacksExpandedDefinition = JSON.parse(fs.readFileSync(path.join(__dirname, "datapacksexpanddefinition.json"), 'utf8'));
 };
 
 DataPacksUtils.prototype.getSourceKeyDefinitionFields = function(SObjectType) {
 
-	if (this.dataPacksExpandedDefinition.SourceKeyDefinitions[SObjectType]) {
-		return this.dataPacksExpandedDefinition.SourceKeyDefinitions[SObjectType];
-	}
+    if (this.dataPacksExpandedDefinition.SourceKeyDefinitions[SObjectType]) {
+        return this.dataPacksExpandedDefinition.SourceKeyDefinitions[SObjectType];
+    }
 
-	if (this.dataPacksExpandedDefinition.SourceKeyDefinitions[this.getWithNamespace(SObjectType)]) {
-		return this.dataPacksExpandedDefinition.SourceKeyDefinitions[this.getWithNamespace(SObjectType)];
-	}
+    if (this.dataPacksExpandedDefinition.SourceKeyDefinitions[this.getWithNamespace(SObjectType)]) {
+        return this.dataPacksExpandedDefinition.SourceKeyDefinitions[this.getWithNamespace(SObjectType)];
+    }
 
-	return []; 
+    return []; 
 }
 
 DataPacksUtils.prototype.isValidType = function(dataPackType) {
-	return this.dataPacksExpandedDefinition.hasOwnProperty(dataPackType); 
+    return this.dataPacksExpandedDefinition.hasOwnProperty(dataPackType); 
 }
 
 DataPacksUtils.prototype.isValidSObject = function(dataPackType, SObjectType) {
-	return dataPackType == 'SObject' || (this.isValidType(dataPackType) && (this.dataPacksExpandedDefinition[dataPackType].hasOwnProperty(SObjectType) || this.dataPacksExpandedDefinition[dataPackType].hasOwnProperty(this.getWithNamespace(SObjectType)))); 
+    return dataPackType == 'SObject' || (this.isValidType(dataPackType) && (this.dataPacksExpandedDefinition[dataPackType].hasOwnProperty(SObjectType) || this.dataPacksExpandedDefinition[dataPackType].hasOwnProperty(this.getWithNamespace(SObjectType)))); 
 }
 
 DataPacksUtils.prototype.getWithoutNamespace = function(field) {
-	var nspos = field.indexOf(namespaceFieldPrefix);
-	return nspos != -1 ? field.substring(nspos + namespaceFieldPrefix.length) : field;
+    var nspos = field.indexOf(namespaceFieldPrefix);
+    return nspos != -1 ? field.substring(nspos + namespaceFieldPrefix.length) : field;
 }
 
 DataPacksUtils.prototype.getWithNamespace = function(field) {
-	return namespaceFieldPrefix + field;
+    return namespaceFieldPrefix + field;
 }
 
 DataPacksUtils.prototype.getDataField = function(dataPackData) {
-	var dataKey;
+    var dataKey;
 
-	Object.keys(dataPackData.VlocityDataPackData).forEach(function(key) {
+    Object.keys(dataPackData.VlocityDataPackData).forEach(function(key) {
 
-		if (Array.isArray(dataPackData.VlocityDataPackData[key]) && dataPackData.VlocityDataPackData[key].length > 0 && dataPackData.VlocityDataPackData[key][0].VlocityRecordSObjectType) {
-			dataKey = dataPackData.VlocityDataPackData[key][0].VlocityRecordSObjectType;
-		}
-	});
+        if (Array.isArray(dataPackData.VlocityDataPackData[key]) && dataPackData.VlocityDataPackData[key].length > 0 && dataPackData.VlocityDataPackData[key][0].VlocityRecordSObjectType) {
+            dataKey = dataPackData.VlocityDataPackData[key][0].VlocityRecordSObjectType;
+        }
+    });
 
-	return dataKey; 
+    return dataKey; 
 }
 
 DataPacksUtils.prototype.getSortFields = function(dataPackType, SObjectType) {
-	return this.getExpandedDefinition(dataPackType, SObjectType, "SortFields");
+    return this.getExpandedDefinition(dataPackType, SObjectType, "SortFields");
 }
 
 DataPacksUtils.prototype.getFilterFields = function(dataPackType, SObjectType) {
-	return this.getExpandedDefinition(dataPackType, SObjectType, "FilterFields");
+    return this.getExpandedDefinition(dataPackType, SObjectType, "FilterFields");
 }
 
 DataPacksUtils.prototype.getFileName = function(dataPackType, SObjectType) {
-	return this.getExpandedDefinition(dataPackType, SObjectType, "FileName");
+    return this.getExpandedDefinition(dataPackType, SObjectType, "FileName");
 }
 
 DataPacksUtils.prototype.getFolderName = function(dataPackType, SObjectType) {
-	return this.getExpandedDefinition(dataPackType, SObjectType, "FolderName");
+    return this.getExpandedDefinition(dataPackType, SObjectType, "FolderName");
 }
 
 DataPacksUtils.prototype.getFileType = function(dataPackType, SObjectType) {
-	return this.getExpandedDefinition(dataPackType, SObjectType, "FileType");
+    return this.getExpandedDefinition(dataPackType, SObjectType, "FileType");
 }
 
 DataPacksUtils.prototype.getJsonFields = function(dataPackType, SObjectType) {
-	return this.getExpandedDefinition(dataPackType, SObjectType, "JsonFields");
+    return this.getExpandedDefinition(dataPackType, SObjectType, "JsonFields");
 }
 
 DataPacksUtils.prototype.getApexImportDataKeys = function(SObjectType) {
-	var defaults = ["VlocityRecordSObjectType", "Name" ];
-	var apexImportDataKeys = this.dataPacksExpandedDefinition.ApexImportDataKeys[SObjectType];
+    var defaults = ["VlocityRecordSObjectType", "Name" ];
+    var apexImportDataKeys = this.dataPacksExpandedDefinition.ApexImportDataKeys[SObjectType];
 
-	if (apexImportDataKeys) {
-		return defaults.concat(apexImportDataKeys);
-	}
+    if (apexImportDataKeys) {
+        return defaults.concat(apexImportDataKeys);
+    }
 
-	return defaults;
+    return defaults;
 }
 
 DataPacksUtils.prototype.isCompiledField = function(dataPackType, SObjectType, field) {
-	var compiledFields = this.getExpandedDefinition(dataPackType, SObjectType, "CompiledFields");
-	return compiledFields && compiledFields.indexOf(field) != -1;
+    var compiledFields = this.getExpandedDefinition(dataPackType, SObjectType, "CompiledFields");
+    return compiledFields && compiledFields.indexOf(field) != -1;
 }
 
 DataPacksUtils.prototype.getExpandedDefinition = function(dataPackType, SObjectType, dataKey) {
-	var definitionValue;
+    var definitionValue;
 
-	if (this.isValidType(dataPackType)) {
+    if (this.isValidType(dataPackType)) {
 
-		if (SObjectType) {
-			if (this.dataPacksExpandedDefinition[dataPackType][SObjectType]) {
-				definitionValue = this.dataPacksExpandedDefinition[dataPackType][SObjectType][dataKey]; 
-			} else if (this.dataPacksExpandedDefinition[dataPackType][this.getWithNamespace(SObjectType)]) {
-				definitionValue = this.dataPacksExpandedDefinition[dataPackType][this.getWithNamespace(SObjectType)][dataKey];
-			}
-		} else {
-			definitionValue = this.dataPacksExpandedDefinition[dataPackType][dataKey]; 
-		}
-	}
-	if (!definitionValue) {
-		definitionValue = this.dataPacksExpandedDefinition.DefaultValues[dataKey]; 
-	}
+        if (SObjectType) {
+            if (this.dataPacksExpandedDefinition[dataPackType][SObjectType]) {
+                definitionValue = this.dataPacksExpandedDefinition[dataPackType][SObjectType][dataKey]; 
+            } else if (this.dataPacksExpandedDefinition[dataPackType][this.getWithNamespace(SObjectType)]) {
+                definitionValue = this.dataPacksExpandedDefinition[dataPackType][this.getWithNamespace(SObjectType)][dataKey];
+            }
+        } else {
+            definitionValue = this.dataPacksExpandedDefinition[dataPackType][dataKey]; 
+        }
+    }
+    if (!definitionValue) {
+        definitionValue = this.dataPacksExpandedDefinition.DefaultValues[dataKey]; 
+    }
 
-	return definitionValue;
+    return definitionValue;
 }
 
 // Traverse JSON and get all Ids
@@ -130,10 +130,10 @@ DataPacksUtils.prototype.getAllSObjectIds = function(currentData, currentIdsOnly
         } else {
 
             if (currentData.VlocityDataPackType == "SObject") {
-            	if (currentData.Id) {
-            		currentIdsOnly.push(currentData.Id);
-            		typePlusId.push({ SObjectType: currentData.VlocityRecordSObjectType, Id: currentData.Id });
-            	}
+                if (currentData.Id) {
+                    currentIdsOnly.push(currentData.Id);
+                    typePlusId.push({ SObjectType: currentData.VlocityRecordSObjectType, Id: currentData.Id });
+                }
             }
            
             Object.keys(currentData).forEach(function(sobjectField) {
@@ -158,104 +158,111 @@ DataPacksUtils.prototype.getFiles = function(srcpath) {
 };
 
 DataPacksUtils.prototype.fileExists = function(srcpath) {
-	try {
-		fs.statSync(srcpath);
-	} catch (e) {
-		return false;
-	}
-	
-	return true;
+    try {
+        fs.statSync(srcpath);
+    } catch (e) {
+        return false;
+    }
+    
+    return true;
 }
 
 DataPacksUtils.prototype.isInManifest = function(dataPackData, manifest) {
-	
-	if (manifest[dataPackData.VlocityDataPackType]) {
-		for (var i = 0; i < manifest[dataPackData.VlocityDataPackType].length; i++)
-		{
-			var man = manifest[dataPackData.VlocityDataPackType][i];
+    
+    if (manifest[dataPackData.VlocityDataPackType]) {
+        for (var i = 0; i < manifest[dataPackData.VlocityDataPackType].length; i++)
+        {
+            var man = manifest[dataPackData.VlocityDataPackType][i];
 
-			if (typeof(man) == 'object') {
-				var isMatching = true;
+            if (typeof(man) == 'object') {
+                var isMatching = true;
 
-				Object.keys(man).forEach(function(key) {
-					if (man[key] != dataPackData[key]) {
-						isMatching = false;
-					}
-				});
+                Object.keys(man).forEach(function(key) {
+                    if (man[key] != dataPackData[key]) {
+                        isMatching = false;
+                    }
+                });
 
-				if (isMatching) {
-					return isMatching;
-				}
-			} else if (man == dataPackData.Id) {
-				return true;
-			}
-		}
-	}
+                if (isMatching) {
+                    return isMatching;
+                }
+            } else if (man == dataPackData.Id) {
+                return true;
+            }
+        }
+    }
 
-	return false;
+    return false;
 }
 
 DataPacksUtils.prototype.loadApex = function(projectPath, filePath, currentContextData) {
-	console.log('Loading APEX code from: ' +  projectPath + '/' + filePath);
+    console.log('Loading APEX code from: ' +  projectPath + '/' + filePath);
 
-	if (this.vlocity.datapacksutils.fileExists(projectPath + '/' + filePath)) {
-		var apexFileName = projectPath + '/' + filePath;
-	} else if (this.vlocity.datapacksutils.fileExists('apex/' + filePath)) {
-		var apexFileName = 'apex/' + filePath;
-	} else {
-		return Promise.reject('The specified file \'' +filePath+ '\' does not exist.');
-	}
+    if (this.vlocity.datapacksutils.fileExists(projectPath + '/' + filePath)) {
+        var apexFileName = projectPath + '/' + filePath;
+    } else if (this.vlocity.datapacksutils.fileExists('apex/' + filePath)) {
+        var apexFileName = 'apex/' + filePath;
+    } else {
+        return Promise.reject('The specified file \'' +filePath+ '\' does not exist.');
+    }
 
-	if (apexFileName) {
-		var apexFileData = fs.readFileSync(apexFileName, 'utf8');
-		var includes = apexFileData.match(/\/\/include(.*?);/g);
-		var includePromises = [];
+    if (apexFileName) {
+        var apexFileData = fs.readFileSync(apexFileName, 'utf8');
+        var includes = apexFileData.match(/\/\/include(.*?);/g);
+        var includePromises = [];
 
-		if (includes) {
-			var srcdir = path.dirname(apexFileName);
-			includes.forEach((replacement, i) => {
-				var className = replacement.replace("//include ", "").replace(";", "");				
-				includePromises.push(
-					this.loadApex(srcdir, className, currentContextData).then((includedFileData) => {
-						apexFileData = apexFileData.replace(replacement, includedFileData);
-						return apexFileData;
-					}
-				));
+        if (includes) {
+            var srcdir = path.dirname(apexFileName);
+            includes.forEach((replacement, i) => {
+                var className = replacement.replace("//include ", "").replace(";", "");                
+                includePromises.push(
+                    this.loadApex(srcdir, className, currentContextData).then((includedFileData) => {
+                        apexFileData = apexFileData.replace(replacement, includedFileData);
+                        return apexFileData;
+                    }
+                ));
             });
-		}
+        }
 
-		return Promise.all(includePromises).then(() => {
-			if (currentContextData) {
-				apexFileData = apexFileData.replace(/CURRENT_DATA_PACKS_CONTEXT_DATA/g, JSON.stringify(currentContextData));
-			}
-			return apexFileData
-				.replace(/%vlocity_namespace%/g, this.vlocity.namespace)
-				.replace(/vlocity_namespace/g, this.vlocity.namespace);
-		});
-	} else {
-		return Promise.reject('ProjectPath or filePath arguments passed as null or undefined.');		
-	}
+        return Promise.all(includePromises).then(() => {
+            if (currentContextData) {
+                apexFileData = apexFileData.replace(/CURRENT_DATA_PACKS_CONTEXT_DATA/g, JSON.stringify(currentContextData));
+            }
+            return apexFileData
+                .replace(/%vlocity_namespace%/g, this.vlocity.namespace)
+                .replace(/vlocity_namespace/g, this.vlocity.namespace);
+        });
+    } else {
+        return Promise.reject('ProjectPath or filePath arguments passed as null or undefined.');        
+    }
 }
 
-DataPacksUtils.prototype.runApex = function(projectPath, filePath, currentContextData) {	
-	return this
-		.loadApex(projectPath, filePath, currentContextData)
-		.then((apexFileData) => { 
-			return new Promise((resolve, reject) => {
-				this.vlocity.jsForceConnection.tooling.executeAnonymous(apexFileData, (err, res) => {
-					if (err) return reject(err);
-					if (res.success === true) return resolve(true);
-					if (res.compileProblem) {
-						console.log('\x1b[36m', '>>' ,'\x1b[0m APEX Compilation Error:', res.compileProblem);
-					}
-					if (res.exceptionMessage) {
-						console.log('\x1b[36m', '>>' ,'\x1b[0m APEX Exception Message:', res.exceptionMessage);
-					}
-					if (res.exceptionStackTrace) {
-						console.log('\x1b[36m', '>>' ,'\x1b[0m APEX Exception StackTrace:', res.exceptionStackTrace);
-					}
-					return reject(res.compileProblem || res.exceptionMessage || 'APEX code failed to execute but no exception message was provided');
-				});
-			});
-		});
+DataPacksUtils.prototype.runApex = function(projectPath, filePath, currentContextData) {    
+    return this
+        .loadApex(projectPath, filePath, currentContextData)
+        .then((apexFileData) => {             
+            while(true) {                
+                var replaced = apexFileData.replace(new RegExp('\/\/.*\n?','m'), '');
+                if (replaced == apexFileData) {
+                    break;
+                }
+                apexFileData = replaced;
+            }
+            return new Promise((resolve, reject) => {
+                this.vlocity.jsForceConnection.tooling.executeAnonymous(apexFileData, (err, res) => {
+                    if (err) return reject(err);
+                    if (res.success === true) return resolve(true);
+                    if (res.compileProblem) {
+                        console.log('\x1b[36m', '>>' ,'\x1b[0m APEX Compilation Error:', res.compileProblem);
+                    }
+                    if (res.exceptionMessage) {
+                        console.log('\x1b[36m', '>>' ,'\x1b[0m APEX Exception Message:', res.exceptionMessage);
+                    }
+                    if (res.exceptionStackTrace) {
+                        console.log('\x1b[36m', '>>' ,'\x1b[0m APEX Exception StackTrace:', res.exceptionStackTrace);
+                    }
+                    return reject(res.compileProblem || res.exceptionMessage || 'APEX code failed to execute but no exception message was provided');
+                });
+            });
+        });
 }
