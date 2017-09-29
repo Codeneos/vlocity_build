@@ -1,5 +1,4 @@
 var jsforce = require('jsforce');
-var ProgressBar = require('progress');
 
 var DATA_PACKS_REST_RESOURCE = "/v1/VlocityDataPacks/";
 
@@ -11,8 +10,6 @@ var DataPacks = module.exports = function(vlocity) {
     if (this.vlocity.namespace) {
         this.dataPacksEndpoint = '/' + this.vlocity.namespace + DATA_PACKS_REST_RESOURCE;
     }
-    
-    this.bar; 
 };
 
 DataPacks.prototype.getAllDataPacks = function(callback) {
@@ -96,7 +93,7 @@ DataPacks.prototype.getDataPackDataChunked = function(dataPackDataInfo, chunkRes
 
                 self.getDataPackDataChunked(dataPackDataInfo, JSON.parse(res), callback);
             });
-        }    
+        }
     });
 }
 
@@ -178,30 +175,44 @@ DataPacks.prototype.runDataPackProcess = function(dataPackData, options, onSucce
             }
 
             if (result && result.Total > 0) {
+                if (result) {
+                    if (result.Total > 0) {
+                        if (dataPackData.processType == "Export" 
+                            && dataPackData.processData
+                            && (!dataPackData.processData.maxDepth 
+                                || dataPackData.processData.maxDepth == -1)
+                            && dataPackData.processData.exportPacksMaxSize 
+                            && result.Finished > dataPackData.processData.exportPacksMaxSize) {
+                            result.Status = "Complete";
+                        }
 
-                if (result.Async && result.Total == result.Finished) {
-                    result.Finished--;
+                        if (result.Async && result.Total == result.Finished) {
+                            result.Finished--;
+                        }
+                    }
+
+                    if (result.activationSuccess) {
+                        result.activationSuccess.forEach(function(activatedEntity) {
+                            console.log('\x1b[32m', 'Activated >> ', '\x1b[0m', activatedEntity.VlocityDataPackKey); 
+                        });
+                    }
                 }
-
-                self.bar = new ProgressBar(':bar Current Status - Success: :current Total: :total', { total: result.Total, width: (result.total < result.Total ? result.Total : 50) });
-                self.bar.tick(result.Finished);
             }
             
             if (err) { 
-                console.error('\x1b[31m', 'ERROR >>' ,'\x1b[0m', err);
-                
+                console.error('\x1b[31m', 'ERROR >>' ,'\x1b[0m', err); 
                 if (onError) onError(err);
+                //else if (onSuccess) onSuccess(err);
                 else throw err;
             } else if (/(Ready|InProgress)/.test(result.Status)) {
-                dataPackData.processData = result;
-                
+                dataPackData.processData = result;                
                 setTimeout(function() { self.runDataPackProcess(dataPackData, options, onSuccess, onError); }, result.Async ? 3000 : 1);
             } else if (/(Complete|Deleted)/.test(result.Status)) {
-
                 if (onSuccess) onSuccess(result);
                 else console.log(result);
             } else if (/Error/.test(result.Status)) {
                 if (onError) onError(result);
+                //else if (onSuccess) onSuccess(result);
                 else console.log(result);
             }
         });
