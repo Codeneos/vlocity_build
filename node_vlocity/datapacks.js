@@ -201,10 +201,12 @@ DataPacks.prototype.runDataPackProcess = function(dataPackData, options, onSucce
             
             if (err) { 
                 console.error('\x1b[31m', 'ERROR >>' ,'\x1b[0m', err); 
-                if (onError) onError(err);
+                if (onError) return onError(err);
                 //else if (onSuccess) onSuccess(err);
                 else throw err;
-            } else if (/(Ready|InProgress)/.test(result.Status)) {
+            } 
+            
+            if (/(Ready|InProgress)/.test(result.Status)) {
                 dataPackData.processData = result;                
                 setTimeout(function() { self.runDataPackProcess(dataPackData, options, onSuccess, onError); }, result.Async ? 3000 : 1);
             } else if (/(Complete|Deleted)/.test(result.Status)) {
@@ -231,13 +233,13 @@ DataPacks.prototype.export = function(dataPackType, exportData, options, onSucce
     this.runDataPackProcess(dataPackData, options, onSuccess, onError);
 }
 
-DataPacks.prototype.import = function(dataJson, options, onSuccess, onError) {
+DataPacks.prototype.import = function(dataJson, options, callback) {
     var dataPackData = { 
         processType: 'Import', 
         processData: { 'VlocityDataPackData': dataJson }
     };
 
-    this.runDataPackProcess(dataPackData, options, onSuccess, onError);
+    this.runDataPackProcess(dataPackData, options, callback, callback);
 }
 
 DataPacks.prototype.activate = function(dataPackId, dataPackKeysToActivate, options, onSuccess, onError) {
