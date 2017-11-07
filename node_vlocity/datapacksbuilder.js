@@ -270,7 +270,6 @@ DataPacksBuilder.prototype.getNextImport = function(importPath, dataPackKeys, si
                 if (!jobInfo.headersOnly) {
                    parentData = self.allFileDataMap[ (fullPathToFiles + '/' + dataPackLabel + '_ParentKeys.json').toLowerCase()];
                 } else if (!self.vlocity.datapacksutils.isAllowHeadersOnly(dataPackType)) {
-
                     continue;
                 }
 

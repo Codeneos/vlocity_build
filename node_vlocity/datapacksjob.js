@@ -372,7 +372,6 @@ DataPacksJob.prototype.exportFromManifest = function(jobInfo, onComplete) {
             }
 
             console.log('\x1b[32m', 'Exporting', '\x1b[0m ', dataPack.VlocityDataPackType + ' ' + dataPack.Id);
-
             return true;
         });
 
@@ -426,32 +425,24 @@ DataPacksJob.prototype.exportFromManifest = function(jobInfo, onComplete) {
                                                 if (dataPack.VlocityDataPackData[dataField].length == 0) {
                                                     console.log('\x1b[31m', 'Error: ', '\x1b[0m','No records found for - ', dataPack.VlocityDataPackType + ' --- ' + dataPack.VlocityDataPackName);
                                                 } else {
-                                                    dataPack.VlocityDataPackData[dataField].forEach(function(dataEntry) {
-                                                        
+                                                    dataPack.VlocityDataPackData[dataField].forEach(function(dataEntry) {                                                        
                                                         if (jobInfo.alreadyExportedIdsByType[dataPack.VlocityDataPackType].indexOf(dataEntry.Id) == -1) {
-
                                                             jobInfo.alreadyExportedIdsByType[dataPack.VlocityDataPackType].push(dataEntry.Id);
                                                         }
                                                     });
                                                 }
                                             }
-
                                             jobInfo.alreadyExportedKeys.push(dataPack.VlocityDataPackKey);
                                         }
                                     } else if (jobInfo.exportPacksMaxSize && dataPack.VlocityDataPackStatus == 'Ready' && dataPack.VlocityDataPackRelationshipType != "Children") {
-
                                         if (jobInfo.extendedManifest[dataPack.VlocityDataPackType] == null) {
                                             jobInfo.extendedManifest[dataPack.VlocityDataPackType] = [];
                                         }
-
                                         jobInfo.extendedManifest[dataPack.VlocityDataPackType].push(JSON.parse(stringify(dataPack.VlocityDataPackData, { space: 4 })));
                                     } else if (dataPack.VlocityDataPackStatus == 'Error') {
                                         jobInfo.hasError = true;
-
                                         var errorMessage = dataPack.VlocityDataPackType + ' --- ' + dataPack.VlocityDataPackName + ' --- ' + dataPack.VlocityDataPackMessage;
-
                                         console.log('\x1b[31m', 'Error: ', '\x1b[0m', errorMessage);
-
                                         jobInfo.errors.push(errorMessage);          
                                     }
                                 });
@@ -493,7 +484,7 @@ DataPacksJob.prototype.exportFromManifest = function(jobInfo, onComplete) {
             jobInfo.toExportGroups = null;
 
             fs.outputFileSync(CURRENT_INFO_FILE, stringify(jobInfo, { space: 4 }), 'utf8');
-
+            
             self.exportFromManifest(jobInfo, onComplete);
         } else {
             fs.outputFileSync(CURRENT_INFO_FILE, stringify(jobInfo, { space: 4 }), 'utf8');
