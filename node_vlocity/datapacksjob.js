@@ -106,8 +106,8 @@ DataPacksJob.prototype.runJobWithInfo = function(jobInfo, action, onSuccess, onE
         if (self.vlocity.verbose || !onError || !onSuccess) {
             console.log('\x1b[36m', '>>' ,'\x1b[0m', jobStatus);
         }
-        
-        if (jobStatus.hasError) {
+         
+        if (jobStatus.hasError && !jobInfo.continueAfterError) {
             if (onError) return onError(jobStatus);
         }        
         if (onSuccess) onSuccess(jobStatus);

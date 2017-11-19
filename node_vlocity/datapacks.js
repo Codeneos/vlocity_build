@@ -230,7 +230,7 @@ DataPacks.prototype.export = function(dataPackType, exportData, options, onSucce
         }
     };
 
-    this.runDataPackProcess(dataPackData, options, onSuccess, onError);
+    this.runDataPackProcess(dataPackData, options, onSuccess, onError || onSuccess);
 }
 
 DataPacks.prototype.import = function(dataJson, options, callback) {

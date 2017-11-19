@@ -14,7 +14,7 @@ module.exports = function (grunt) {
 
 	  	var properties = grunt.config.get('properties');
 		var jobStartTime = Date.now();
-
+		
 	  	var vlocity = new node_vlocity({
           username: properties['sf.username'], 
           password: properties['sf.password'], 
@@ -23,6 +23,8 @@ module.exports = function (grunt) {
           loginUrl: properties['sf.loginUrl']
       	});
 
+		// Dtermine datapack job either fomr console or from properties file
+		jobName = jobName || properties['vlocity.dataPackJob'];
       	grunt.log.writeln('DataPacks Job Started - ' + jobName + ' Org: ' + properties['sf.username']);
 
       	if (properties['vlocity.dataPacksJobFolder']) {
@@ -42,13 +44,14 @@ module.exports = function (grunt) {
 
 		try {
 	      	fs.readdirSync(dataPacksJobFolder).filter(function(file) {
+				return path.extname(file).toLocaleLowerCase() == '.yaml';
+	    	}).forEach(function(file) {
 	      		try {
-	      			var fileName = file.substr(0,file.indexOf('.'));
-	      			dataPacksJobsData[fileName] = yaml.safeLoad(fs.readFileSync(dataPacksJobFolder + '/' + file, 'utf8'));
-
+	      			var fileName = file.substr(0, file.indexOf('.'));
+	      			dataPacksJobsData[fileName] = yaml.safeLoad(fs.readFileSync(path.join(dataPacksJobFolder, file), 'utf8'));
 	      			dataPacksJobsData[fileName].QueryDefinitions = queryDefinitions;
-	      		} catch (e1) { 
-	      			//console.log(e1);
+	      		} catch (ex) {
+	      			console.log("Error while parsing job YAML '"+file+"': " + ex);
 	      		}
 	    	});
 		} catch (e2) {
