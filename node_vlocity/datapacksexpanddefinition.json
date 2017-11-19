@@ -396,6 +396,7 @@
                 "%vlocity_namespace%__GlobalKey__c"
             ]
         },
+
         "%vlocity_namespace%__ProductConfigurationProcedure__c": {
             "FileName": [
                 "#ProductConfigurationProcedures"
@@ -453,7 +454,7 @@
                 "%vlocity_namespace%__ChildProductId__r.Name"
             ]
         }
-    },
+    },	
     "Promotion": {
         "%vlocity_namespace%__Promotion__c": {
             "FolderName": [
@@ -463,11 +464,6 @@
     },
     "Rule": {
         "SupportParallel": true,
-        "%vlocity_namespace%__RuleAction__c": {
-            "FileName": [
-                "#RuleActions"
-            ]
-        },
         "%vlocity_namespace%__RuleFilter__c": {
             "FileName": [
                 "#RuleFilters"
@@ -479,11 +475,18 @@
             ]
         },
         "%vlocity_namespace%__Rule__c": {
-            "%vlocity_namespace%__RuleAction__c": "list",
             "%vlocity_namespace%__RuleFilter__c": "list",
             "%vlocity_namespace%__RuleVariable__c": "list",
             "FolderName": [
                 "%vlocity_namespace%__GlobalKey__c"
+            ]
+        }
+    },
+	"RuleAction": {
+        "%vlocity_namespace%__RuleAction__c": {
+            "FolderName": [
+			    "%vlocity_namespace%__RuleId__r.Name",
+                "Name"
             ]
         }
     },
@@ -695,5 +698,44 @@
     "VqResource": {
         "SupportParallel": true,
         "%vlocity_namespace%__VqResource__c": {}
+    },
+	"ProductRelationship": {
+        "%vlocity_namespace%__ProductRelationship__c": {
+            "FolderName": [
+                "Name",
+				"%vlocity_namespace%__Product2Id__r.Name",
+				"%vlocity_namespace%__RelatedProductId__r.Name"
+            ]
+        }
+    },
+	"Catalog": {
+		"%vlocity_namespace%__CatalogRelationship__c": {
+            "FileName": [
+                "#CatalogRelationships"
+            ],
+			"FilterFields" : [
+                "OwnerId"
+            ]
+        },
+        "%vlocity_namespace%__Catalog__c": {
+            "%vlocity_namespace%__CatalogRelationship__c": "list",
+            "FolderName": [
+				"Name"
+            ]
+        }
+    },
+	"CatalogProductRelationship": {
+        "%vlocity_namespace%__CatalogProductRelationship__c": {
+            "FolderName": [
+				"Name"
+            ]
+        }
+    },
+	"OfferingProcedure": {
+        "%vlocity_namespace%__OfferingProcedure__c": {
+            "FolderName": [
+                "Name"
+            ]
+        }
     }
 }
