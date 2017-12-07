@@ -408,8 +408,24 @@ DataPacksExpand.prototype.processDataPack = function(dataPackData, options, isPa
                     });
                 }
 
+                // handle entity filters
+                if (dataPackType == 'EntityFilter') {
+                    // handle rule condition
+                    if (dataPackDataChild['%vlocity_namespace%__EntityFilterCondition__c']) {
+                        dataPackDataChild['%vlocity_namespace%__EntityFilterCondition__c'].forEach((condition) => {
+                            var value = condition['%vlocity_namespace%__Value__c'];
+                            if (typeof value === 'object') {
+                                var type = value.VlocityLookupRecordSourceKey.split('/').shift();
+                                var relationId = type + '/' + value.Name;
+                                allParentKeys.push(relationId);
+                                allRels[relationId] = 'Reference by Salesforce Id';
+                            }
+                        });
+                    }
+                }
+
                 // Process foreing key packs
-                (options.parentKeyPacks = options.parentKeyPacks || {})[parentName + dataPackName] = {
+                (options.parentKeyPacks = options.parentKeyPacks || {})[ [dataPackType, parentName, dataPackName].join('/') ] = {
                     'name': dataPackName,
                     'parentName': parentName, 
                     'dataType': dataPackType,    
@@ -418,8 +434,7 @@ DataPacksExpand.prototype.processDataPack = function(dataPackData, options, isPa
                     'relationNames': allRels, 
                     'relationKeys': dataPackData.VlocityDataPackAllRelationships
                 };
-                self.writeParentKeysFiles(options);
-
+                
                 self.processDataPackData(dataPackType, parentName, null, dataPackDataChild, isPagination);
             });            
         }
@@ -649,6 +664,8 @@ DataPacksExpand.prototype.expand = function(targetPath, dataPackData, options, o
                 self.processDataPack(dataPack, options, true);
             }
         });
+
+        self.writeParentKeysFiles(options, false);
     }
 
     onComplete();
