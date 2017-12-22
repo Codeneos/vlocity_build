@@ -1,10 +1,10 @@
 <project name="VlocityAnt" default="test" basedir="." xmlns:sf="antlib:com.salesforce">
 
-	<taskdef resource="net/sf/antcontrib/antlib.xml" classpath="${basedir}/lib/ant-contrib-1.0b3.jar" />
+	<taskdef resource="net/sf/antcontrib/antlib.xml" classpath="${basedir}/bin/ant-contrib-1.0b3.jar" />
 
 	<taskdef resource="com/salesforce/antlib.xml" uri="antlib:com.salesforce">
         <classpath>
-            <pathelement location="${basedir}/lib/ant-salesforce.jar" />        	
+            <pathelement location="${basedir}/bin/ant-salesforce.jar" />        	
         </classpath>
     </taskdef>
 
@@ -55,15 +55,26 @@
 		</then>
 	</if>
 
-	<var name="serverurl" unset="true" />
+	<var name="loginUrl" unset="true" />
 	<if>
-		<not><isset property="sf.serverurl" /></not>
+		<not><isset property="sf.loginUrl" /></not>
 		<then>
-			<property name="serverurl" value="https://login.salesforce.com" />
-			<property name="sf.serverurl" value="https://login.salesforce.com" />
+			<property name="loginUrl" value="https://login.salesforce.com" />
+			<property name="sf.loginUrl" value="https://login.salesforce.com" />
 		</then>
 		<else>
-			<property name="serverurl" value="${sf.serverurl}" />
+			<property name="loginUrl" value="${sf.loginUrl}" />
+		</else>
+	</if>
+
+	<var name="grunt.prop" unset="true" />
+	<if>
+		<not><isset property="grunt.propertyfile" /></not>
+		<then>
+			<property name="grunt.prop" value="build.properties" />
+		</then>
+		<else>
+			<property name="grunt.prop" value="${grunt.propertyfile}" />
 		</else>
 	</if>
 
@@ -81,18 +92,49 @@
 
     <target name="salesforceDeploy">
     	<echo> ${sf.username} - ${basedir}/${sf.sourcedir}</echo>
-	   	<sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${serverurl}" maxPoll="${maxPoll}" deployRoot="${basedir}/${sf.sourcedir}" pollWaitMillis="1000" />
+    	<fixMetadataFiles dir="${basedir}/${sf.sourcedir}" />
+	   	<sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${loginUrl}" maxPoll="${maxPoll}" deployRoot="${basedir}/${sf.sourcedir}" pollWaitMillis="1000" />
   	</target>
 
   	<target name="salesforceDeployTest">
   		<echo> ${sf.username} - ${basedir}/${sf.sourcedir}</echo>
-	   	<sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${serverurl}" maxPoll="${maxPoll}" deployRoot="${basedir}/${sf.sourcedir}" pollWaitMillis="1000" checkOnly="true" />
+        <fixMetadataFiles dir="${basedir}/${sf.sourcedir}" />
+	   	<sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${loginUrl}" maxPoll="${maxPoll}" deployRoot="${basedir}/${sf.sourcedir}" pollWaitMillis="1000" checkOnly="true" />
   	</target>
 
   	<target name="salesforceRetrieve">
   		<echo> ${sf.username} - ${basedir}/${sf.sourcedir}</echo>
-		<sf:retrieve username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" retrieveTarget="${basedir}/${sf.sourcedir}" unpackaged="${basedir}/${sf.sourcedir}/package.xml" />
+		<sf:retrieve username="${sf.username}" password="${sf.password}" serverurl="${sf.loginUrl}" maxPoll="${sf.maxPoll}" retrieveTarget="${basedir}/${sf.sourcedir}" unpackaged="${basedir}/${sf.sourcedir}/package.xml" />
     </target>
+
+    <target name="salesforceRetrieveAll">
+        <echo> ${sf.username} - ${basedir}/${sf.sourcedir}</echo>
+        <sf:retrieve username="${sf.username}" password="${sf.password}" serverurl="${sf.loginUrl}" maxPoll="${sf.maxPoll}" retrieveTarget="./vlocity-temp/allMetadata" unpackaged="./bin/all_meta_data.xml" />
+    </target>
+
+
+    <target name="salesforceRetrievePackage">
+        <sf:retrieve username="${sf.username}" password="${sf.password}" serverurl="${loginUrl}" maxPoll="${maxPoll}" retrieveTarget="${basedir}/${sf.sourcedir}" packageNames="${packageNames}"/>
+    </target>
+
+    <macrodef name="fixMetadataFiles" description="">
+        <attribute name="dir" description="The path of files"/>
+        <sequential>
+            <for param="file">
+                <path>
+                    <fileset dir="@{dir}" includes="**/*-meta.xml"/>
+                </path>
+                <sequential>
+                    <replaceregexp file="@{file}" match="/*.minorNumber.*" replace="" flags="g"/>
+                    <replaceregexp file="@{file}" match="/*.majorNumber.*" replace="" flags="g"/>
+                    <replaceregexp file="@{file}" match="/*.\/packageVersions.*" replace="" flags="g"/>
+                    <replaceregexp file="@{file}" match="/*.packageVersions.*" replace="" flags="g"/>
+                    <replaceregexp file="@{file}" match="/*.namespace.*" replace="" flags="g"/>
+                    <replaceregexp file="@{file}" match="(\r?\n)\s*\r?\n" flags="g" replace="\1"/>
+                </sequential>
+            </for>
+        </sequential>
+    </macrodef>
 
 	<target name="packExport" description="">
 		<runDataPackJob packCommand="packExport" job="${vlocity.dataPackJob}" />
@@ -102,6 +144,10 @@
 		<runDataPackJob packCommand="packDeploy" job="${vlocity.dataPackJob}" />
 	</target>
 
+    <target name="runTestJob" description="">
+        <runDataPackJob packCommand="runTestJob" job="TestJob" />
+    </target>
+
 	<macrodef name="runDataPackJob" >
 		<attribute name="packCommand" />
 		<attribute name="job" />
@@ -110,13 +156,17 @@
 				<try>
 					<echo> ------------------------------------------- </echo>
 					<echo> ------------------------------------------- </echo>
-					<echo> Running - @{packCommand} - @{job}</echo>
-						<exec executable="${basedir}/bin/run-grunt" dir="${basedir}">
+					<echo> Running - @{packCommand} - @{job} - ${grunt.prop}</echo>
+                        <exec executable="npm" dir="${basedir}">
+                            <arg value="install" />
+                        </exec>
+						<exec executable="node" dir="${basedir}">
+                            <arg value="./node_modules/grunt-cli/bin/grunt" />
 							<arg value="@{packCommand}"/>
 							<arg value="-job"/>
 							<arg value="@{job}"/>
 							<arg value="-propertyfile"/>
-							<arg value="${grunt.propertyfile}"/>
+							<arg value="${grunt.prop}"/>
 						</exec>
 					<echo>Finished</echo>
 				</try>
