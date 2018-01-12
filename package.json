@@ -10,7 +10,7 @@
         "node-notifier": "5.1.2",
         "nopt": "4.0.1",
         "properties": "1.2.1",
-        "sass.js": "0.10.6",
+        "sass.js": "0.10.7",
         "unidecode": "0.1.8"
     },
     "description": "",
